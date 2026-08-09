@@ -4,6 +4,7 @@ import os
 import pickle
 import random
 import re
+import sys
 import time
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -189,7 +190,7 @@ if __name__ == "__main__":
   config = {
     "username": None,
     "password": None,
-    "base_url": "https://www.tjupt.org/",
+    "base_url": "https://tjupt.org/",
     "cookies_path": "data/cookies.pkl",
     "douban_path": "data/douban.json",
   }
@@ -198,7 +199,7 @@ if __name__ == "__main__":
   argument_parser.add_argument("-i", "--ini-path", default="config/config.ini", help="File path for config.ini (default: config/config.ini). The arguments provided by command line will override the settings in this file.")
   argument_parser.add_argument("-u", "--username", help="Your username for TJUPT.")
   argument_parser.add_argument("-p", "--password", help="Your password for TJUPT.")
-  argument_parser.add_argument("-b", "--base-url", help="Base url path for TJUPT (default: https://www.tjupt.org/).")
+  argument_parser.add_argument("-b", "--base-url", help="Base url path for TJUPT (default: https://tjupt.org/).")
   argument_parser.add_argument("-c", "--cookies-path", help="File path for cookies.pkl (default: data/cookies.pkl).")
   argument_parser.add_argument("-d", "--douban-path", help="File path for douban.json (default: data/douban.json).")
   args = argument_parser.parse_args()
@@ -214,4 +215,7 @@ if __name__ == "__main__":
       config[key] = value
 
   bot = Bot(**config)
-  bot.auto_attendance()
+  if not bot.login():
+    sys.exit(1)
+  if not bot.auto_attendance():
+    sys.exit(1)

@@ -1,5 +1,5 @@
 # TJUPT Auto Attendance / 北洋园PT自动签到
-[北洋园PT](https://www.tjupt.org/)的签到图片来自 [豆瓣电影](https://movie.douban.com/) 的海报，因此可通过查询豆瓣的方式实现自动签到。
+[北洋园PT](https://tjupt.org/)的签到图片来自 [豆瓣电影](https://movie.douban.com/) 的海报，因此可通过查询豆瓣的方式实现自动签到。
 
 ## 用法
 ### GitHub Actions
