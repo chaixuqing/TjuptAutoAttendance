@@ -9,6 +9,7 @@ import time
 from argparse import ArgumentParser
 from configparser import ConfigParser
 from datetime import datetime
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -53,18 +54,35 @@ class Bot:
   def login(self) -> bool:
     try_time = 5
     while True:
-      _ = self.session.get(f"{self.base_url}login.php")
-      resopnse = self.session.post(f"{self.base_url}takelogin.php", {
-        "username": self.username,
-        "password": self.password,
-      })
-      if "logout.php" in resopnse.text:
-        self.log(f"Logged in successfully")
-        os.makedirs(os.path.dirname(self.cookies_path), 0o755, True)
-        with open(self.cookies_path, "wb") as f:
-          pickle.dump(self.session.cookies, f)
-        self.log(f"Cookies wrote to file: {self.cookies_path}")
-        return True
+      try:
+        login_page = self.session.get(f"{self.base_url}login.php")
+        tree = BeautifulSoup(login_page.text, "html.parser")
+        form = tree.select_one("form")
+
+        data = {}
+        if form:
+          for item in form.select("input[name]"):
+            data[item.attrs["name"]] = item.attrs.get("value", "")
+        data["username"] = self.username
+        data["password"] = self.password
+
+        action = "takelogin.php"
+        if form:
+          action = form.attrs.get("action", action) or action
+
+        self.session.post(urljoin(self.base_url, action), data)
+        verify_response = self.session.get(f"{self.base_url}attendance.php")
+
+        if "login.php" not in verify_response.url:
+          self.log(f"Logged in successfully")
+          os.makedirs(os.path.dirname(self.cookies_path), 0o755, True)
+          with open(self.cookies_path, "wb") as f:
+            pickle.dump(self.session.cookies, f)
+          self.log(f"Cookies wrote to file: {self.cookies_path}")
+          return True
+      except Exception as e:
+        self.log(f"Log in exception: {e}")
+
       try_time -= 1
       if try_time > 0:
         self.log(f"Log in error, try again ({try_time} left)")
