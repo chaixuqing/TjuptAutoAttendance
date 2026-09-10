@@ -25,9 +25,16 @@ jobs:
         key: ${{ runner.os }}-data
       continue-on-error: true
     - name: Check secrets
-      if: ${{ secrets.USERNAME == '' || secrets.PASSWORD == '' }}
-      run: echo "::warning::The USERNAME and/or PASSWORD secret is not configured, so attendance cannot be performed. Set both in Settings -> Secrets and variables -> Actions."
-    - name: Auto Attendance
+      env:
+        TJUPT_USERNAME: ${{ secrets.USERNAME }}
+        TJUPT_PASSWORD: ${{ secrets.PASSWORD }}
       run: |
-        python main.py -u "${{ secrets.USERNAME }}" -p "${{ secrets.PASSWORD }}"
-      continue-on-error: true
+        if [ -z "$TJUPT_USERNAME" ] || [ -z "$TJUPT_PASSWORD" ]; then
+          echo "::warning::..."
+        fi
+    - name: Auto Attendance
+      env:
+        TJUPT_USERNAME: ${{ secrets.USERNAME }}
+        TJUPT_PASSWORD: ${{ secrets.PASSWORD }}
+      run: |
+        python main.py -u "$TJUPT_USERNAME" -p "$TJUPT_PASSWORD"
