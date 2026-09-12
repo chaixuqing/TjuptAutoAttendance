@@ -9,6 +9,7 @@ import time
 from argparse import ArgumentParser
 from configparser import ConfigParser
 from datetime import datetime
+from urllib.parse import urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
@@ -29,6 +30,14 @@ class Bot:
     self.session.cookies = self.load_cookies()
 
     self.douban_data = self.load_douban_data()
+
+  def normalize_base_url(self, url: str) -> None:
+    parts = urlsplit(url)
+    if parts.scheme and parts.netloc:
+      next_base_url = f"{parts.scheme}://{parts.netloc}/"
+      if next_base_url != self.base_url:
+        self.log(f"Base url updated: {self.base_url} -> {next_base_url}")
+      self.base_url = next_base_url
   
   def log(self, *args, **kw) -> None:
     return print("[%s]" % datetime.now().strftime("%Y-%m-%d %H:%M:%S"), *args, **kw)
@@ -54,7 +63,8 @@ class Bot:
     try_time = 5
     while True:
       try:
-        response = self.session.get(f"{self.base_url}login.php", timeout=20)
+        response = self.session.get(urljoin(self.base_url, "login.php"), timeout=20)
+        self.normalize_base_url(response.url)
         tree = BeautifulSoup(response.text, "html.parser")
         form = tree.select_one('form[action*="takelogin.php"]')
         payload = {}
@@ -66,9 +76,11 @@ class Bot:
           "password": str(self.password or "").strip(),
         })
 
-        _ = self.session.post(f"{self.base_url}takelogin.php", payload, timeout=20)
-        attendance_response = self.session.get(f"{self.base_url}attendance.php", timeout=20)
-        if "login.php" not in attendance_response.url:
+        login_response = self.session.post(urljoin(self.base_url, "takelogin.php"), payload, timeout=20)
+        self.normalize_base_url(login_response.url)
+        attendance_response = self.session.get(urljoin(self.base_url, "attendance.php"), timeout=20)
+        self.normalize_base_url(attendance_response.url)
+        if "logout.php" in login_response.text or "login.php" not in attendance_response.url:
           self.log(f"Logged in successfully")
           os.makedirs(os.path.dirname(self.cookies_path), 0o755, True)
           with open(self.cookies_path, "wb") as f:
@@ -143,12 +155,14 @@ class Bot:
 
   def auto_attendance_once(self) -> bool:
     try:
-      response = self.session.get(f"{self.base_url}attendance.php")
+      response = self.session.get(urljoin(self.base_url, "attendance.php"))
+      self.normalize_base_url(response.url)
       if "login.php" in response.url:
         self.log("Needed to log in")
         if not self.login():
           return False
-        response = self.session.get(f"{self.base_url}attendance.php")
+        response = self.session.get(urljoin(self.base_url, "attendance.php"))
+        self.normalize_base_url(response.url)
 
       text = response.text
       if "今日已签到" in text:
@@ -224,7 +238,8 @@ class Bot:
           "answer": available_choices[0]["value"],
           "submit": "提交"
         }
-        response = self.session.post(f"{self.base_url}attendance.php", data)
+        response = self.session.post(urljoin(self.base_url, "attendance.php"), data)
+        self.normalize_base_url(response.url)
         if "签到成功" in response.text:
           return True
         else:
