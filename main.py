@@ -27,10 +27,10 @@ ENV_KEYS = {
   "douban_path": ("TJUPT_DOUBAN_PATH",),
   # The LLM is optional and off unless a key is provided. The key is deliberately
   # accepted only through the environment or config.ini - never a CLI argument.
-  "llm_api_url": ("TJUPT_LLM_API_URL", "LLM_API_URL"),
-  "llm_api_key": ("TJUPT_LLM_API_KEY", "LLM_API_KEY"),
-  "llm_model": ("TJUPT_LLM_MODEL", "LLM_MODEL"),
-  "llm_vision_model": ("TJUPT_LLM_VISION_MODEL", "LLM_VISION_MODEL"),
+  "llm_api_url": ("https://api-inference.modelscope.cn/v1", "LLM_API_URL"),
+  "llm_api_key": ("ms-b688a058-9dff-4cce-977e-da70fa4fc462", "LLM_API_KEY"),
+  "llm_model": ("deepseek-ai/DeepSeek-V4-Pro-0813", "Qwen/Qwen3.8-Flash-Next"),
+  "llm_vision_model": ("Qwen/Qwen3.5-397B-A17B", "Qwen/Qwen3.8-Flash-Next"),
   "llm_refine": ("TJUPT_LLM_REFINE",),
   "llm_timeout": ("TJUPT_LLM_TIMEOUT",),
   "llm_cache_path": ("TJUPT_LLM_CACHE_PATH",),
