@@ -31,7 +31,7 @@ jobs:
         PY
     - name: Check that credentials stay off the command line
       run: |
-        if grep -RInE 'main\.py .*-(u|p)[= ]' .github/workflows/; then
+        if grep -RInE 'main\.py .*(-(u|p)|--llm-api-key)[= ]' .github/workflows/; then
           echo "::error::secrets must be passed via env, never as arguments (they end up in the process list)"
           exit 1
         fi

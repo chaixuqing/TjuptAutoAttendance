@@ -42,6 +42,13 @@ jobs:
       env:
         TJUPT_USERNAME: ${{ secrets.USERNAME }}
         TJUPT_PASSWORD: ${{ secrets.PASSWORD }}
+        # Optional LLM fallback, used only when Douban cannot resolve an option.
+        # The key is a secret; the rest are ordinary repository variables, so a fork
+        # with nothing configured simply keeps the Douban-only behaviour.
+        TJUPT_LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        TJUPT_LLM_API_URL: ${{ vars.LLM_API_URL }}
+        TJUPT_LLM_MODEL: ${{ vars.LLM_MODEL }}
+        TJUPT_LLM_VISION_MODEL: ${{ vars.LLM_VISION_MODEL }}
       # main.py reads the credentials from the environment, so they never appear on
       # the command line (where they would show up in the runner's process list and in
       # the step's command echo). A non-zero exit code from main.py fails this step.
