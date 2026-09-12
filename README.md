@@ -19,3 +19,16 @@
 ```cron
 0 0 * * * cd /home/username/TjuptAutoAttendance && python3 main.py >> /home/username/TjuptAutoAttendance/out.log 2>&1
 ```
+
+## 行为说明
+- **签到结果会反映在退出码上**：`main.py` 在签到失败时以非零状态码退出，因此 GitHub Actions 的绿色勾才真正代表“已签到”。成功包括“今日已签到”；失败原因（登录被拒绝、验证码无法匹配、页面结构变化等）见日志末尾的 `Result:` 行，以及 Actions 运行页面的 Summary。
+- **凭据可不走命令行**：设置环境变量 `TJUPT_USERNAME`、`TJUPT_PASSWORD`（`base-url`、`cookies-path`、`douban-path` 分别对应 `TJUPT_BASE_URL`、`TJUPT_COOKIES_PATH`、`TJUPT_DOUBAN_PATH`）。配置优先级：默认值 < `config/config.ini` < 环境变量 < 命令行参数。
+- **`data/` 目录会被缓存**（cookies 与豆瓣查询缓存）。缓存键带有 `github.run_id`，因为 Actions 的缓存条目不可覆盖，固定键会导致每次恢复的都是第一次的旧数据。
+
+## 测试
+本仓库自带离线测试（不需要联网，会在本地启动一个模拟北洋园PT登录/签到页面的服务器）：
+
+```bash
+pip install -r requirements.txt
+python -m unittest discover -s tests -t . -v
+```

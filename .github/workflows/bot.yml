@@ -22,7 +22,12 @@ jobs:
       uses: actions/cache@v6
       with:
         path: data
-        key: ${{ runner.os }}-data
+        # A cache entry is immutable, so a fixed key would restore the very first
+        # upload forever and never save the refreshed cookies / Douban lookups.
+        # A per-run key plus a prefix restore gives an append-only cache instead.
+        key: ${{ runner.os }}-data-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-data-
       continue-on-error: true
     - name: Check secrets
       env:
@@ -30,11 +35,14 @@ jobs:
         TJUPT_PASSWORD: ${{ secrets.PASSWORD }}
       run: |
         if [ -z "$TJUPT_USERNAME" ] || [ -z "$TJUPT_PASSWORD" ]; then
-          echo "::warning::..."
+          echo "::error::Repository secrets USERNAME and/or PASSWORD are not set. Add them under Settings -> Secrets -> Actions."
+          exit 1
         fi
     - name: Auto Attendance
       env:
         TJUPT_USERNAME: ${{ secrets.USERNAME }}
         TJUPT_PASSWORD: ${{ secrets.PASSWORD }}
-      run: |
-        python main.py -u "$TJUPT_USERNAME" -p "$TJUPT_PASSWORD"
+      # main.py reads the credentials from the environment, so they never appear on
+      # the command line (where they would show up in the runner's process list and in
+      # the step's command echo). A non-zero exit code from main.py fails this step.
+      run: python main.py
