@@ -157,9 +157,44 @@ class Bot:
 
       tree = BeautifulSoup(text, "html.parser")
 
-      captcha_image = tree.select_one(".captcha > tr > td > img").attrs["src"]
-      captcha_image_id = re.findall(r"(?<=/)p\d+(?=\.)", captcha_image)[0]
-      captcha_options = re.findall(r'<input name="answer" type="radio" value="(\d+-\d+-\d+ \d+:\d+:\d+&amp;(\d+))"/>([^<>]*?)<', str(tree.select_one(".captcha form table")))
+      captcha_image_element = tree.select_one(".captcha img")
+      if not captcha_image_element:
+        self.log("Captcha image not found")
+        return False
+      captcha_image = captcha_image_element.attrs.get("src", "")
+      captcha_image_id_match = re.search(r"(?<=/)p\d+(?=\.)", captcha_image)
+      if not captcha_image_id_match:
+        self.log(f"Captcha image id not found, captcha_image: {captcha_image}")
+        return False
+      captcha_image_id = captcha_image_id_match.group(0)
+
+      captcha_table = tree.select_one(".captcha form table")
+      if not captcha_table:
+        self.log("Captcha options table not found")
+        return False
+
+      captcha_options = []
+      for option_input in captcha_table.select('input[name="answer"][type="radio"]'):
+        value = option_input.attrs.get("value", "").replace("&amp;", "&")
+        id_match = re.search(r"&(\d+)$", value)
+        option_id = id_match.group(1) if id_match else ""
+
+        title_parts = []
+        for sibling in option_input.next_siblings:
+          if getattr(sibling, "name", None) == "br":
+            break
+          if hasattr(sibling, "get_text"):
+            sibling_text = sibling.get_text(" ", strip=True)
+          else:
+            sibling_text = str(sibling).strip()
+          if sibling_text:
+            title_parts.append(sibling_text)
+
+        title = "".join(title_parts).strip()
+        if not title:
+          self.log(f"Captcha option title empty, value: {value}")
+          continue
+        captcha_options.append((value, option_id, title))
 
       available_choices = []
 
